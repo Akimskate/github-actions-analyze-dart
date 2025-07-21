@@ -2,6 +2,16 @@ const core = require('@actions/core');
 const exec = require('@actions/exec');
 const path = require('path');
 
+function isGeneratedFile(file) {
+  return (
+    file.endsWith('.g.dart') ||
+    file.includes('.g.') ||
+    file.endsWith('.freezed.dart') ||
+    file.endsWith('.gen.dart') ||
+    file.endsWith('.mocks.dart')
+  );
+}
+
 async function run() {
   try {
     const workingDirectory = path.resolve(process.env.GITHUB_WORKSPACE, core.getInput('working-directory'))
@@ -53,6 +63,11 @@ async function analyze(workingDirectory) {
       continue;
     }
 
+    if (isGeneratedFile(file)) {
+      console.log(`Excluded from analysis: ${file}`);
+      continue;
+    }
+
     const lineData = line.split(dataDelimiter);
     const lint = lineData[2];
     const lintLowerCase = lint.toLowerCase();
@@ -101,7 +116,7 @@ async function format(workingDirectory) {
   args.push('.');
 
   await exec.exec('dart', args, options);
-  
+
   let warningCount = 0;
   const lines = output.trim().split(/\r?\n/);
 
@@ -109,6 +124,11 @@ async function format(workingDirectory) {
     if (!line.endsWith('.dart')) continue;
     const file = line.substring(8); // Remove the "Changed " prefix
 
+    if (isGeneratedFile(file)) {
+      console.log(`Excluded from format check: ${file}`);
+      continue;
+    }
+    
     console.log(`::warning file=${file}::Invalid format. For more details, see https://dart.dev/guides/language/effective-dart/style#formatting`);
     warningCount++;
   }
