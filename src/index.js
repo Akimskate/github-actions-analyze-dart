@@ -63,15 +63,16 @@ async function analyze(workingDirectory) {
       continue;
     }
 
+    const lineData = line.split(dataDelimiter);
+    const lint = lineData[2];
+    const lintLowerCase = lint.toLowerCase();
+    const file = lineData[3].replace(workingDirectory, '');
+
     if (isGeneratedFile(file)) {
       console.log(`Excluded from analysis: ${file}`);
       continue;
     }
 
-    const lineData = line.split(dataDelimiter);
-    const lint = lineData[2];
-    const lintLowerCase = lint.toLowerCase();
-    const file = lineData[3].replace(workingDirectory, '');
     const url = lint === lintLowerCase
       ? `https://dart-lang.github.io/linter/lints/${lint}.html`
       : `https://dart.dev/tools/diagnostic-messages#${lintLowerCase}`
